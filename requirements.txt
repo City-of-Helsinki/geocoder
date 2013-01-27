@@ -1,0 +1,2 @@
+Django
+-e git+https://github.com/toastdriven/django-tastypie.git#egg=django-tastypie
