@@ -1,0 +1,6 @@
+*~
+*.pyc
+*.pyo
+*.mo
+.Rproj.user
+.cache
