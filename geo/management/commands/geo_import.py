@@ -41,10 +41,14 @@ class Command(BaseCommand):
         muni_dict = {}
         for muni in muni_list:
             muni_dict[muni.name] = muni
+            muni.num_addr = Address.objects.filter(municipality=muni).count()
+        bulk_addr_list = []
         for idx, row in enumerate(reader):
             street = row[0]
             num = int(row[1])
             num2 = row[2]
+            if not num2:
+                num2 = None
             letter = row[3]
             coord_n = int(row[8])
             coord_e = int(row[9])
@@ -56,22 +60,38 @@ class Command(BaseCommand):
             if id_s == 'Eliel Saarisen tie 4':
                 muni_name = 'Helsinki'
             muni = muni_dict[muni_name]
-            args = dict(municipality=muni, street=street, number=num, letter=letter)
-            try:
-                addr = Address.objects.get(**args)
-            except Address.DoesNotExist:
+            args = dict(municipality=muni, street=street, number=num, number_end=num2, letter=letter)
+            # Optimization: if the muni doesn't have any addresses yet,
+            # use bulk creation.
+            addr = None
+            if muni.num_addr != 0:
+                try:
+                    addr = Address.objects.get(**args)
+                except Address.DoesNotExist:
+                    pass
+            if not addr:
                 addr = Address(**args)
-            # 3879
-            to_wgs84 = CoordTransform(SpatialReference('3879'), SpatialReference('WGS84'))
+
             pnt = Point(coord_e, coord_n, srid=3879)
-            pnt.transform(to_wgs84)
+            pnt.transform(PROJECTION_SRID)
             #print "%s: %s %d%s N%d E%d (%f,%f)" % (muni_name, street, num, letter, coord_n, coord_e, pnt.y, pnt.x)
+            addr.location = pnt
+            if not addr.pk:
+                bulk_addr_list.append(addr)
+            else:
+                addr.save()
+
             if idx > 0 and idx % 1000 == 0:
-                print "%d addresses processed" % idx
+                print "%d addresses processed (%d bulk entries)" % (idx, len(bulk_addr_list))
+                if bulk_addr_list:
+                    Address.objects.bulk_create(bulk_addr_list)
+                    bulk_addr_list = []
                 # Reset DB query store to free up memory
                 db.reset_queries()
-            addr.location = pnt
-            addr.save()
+
+        if bulk_addr_list:
+            Address.objects.bulk_create(bulk_addr_list)
+            bulk_addr_list = []
 
     def handle(self, **options):
         http = HttpFetcher()
