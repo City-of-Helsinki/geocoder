@@ -14,10 +14,10 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'osoite',                      # Or path to database file if using sqlite3.
+        'NAME': 'geocoder',                      # Or path to database file if using sqlite3.
         # The following settings are not used with sqlite3:
-        'USER': 'osoite',
-        'PASSWORD': 'osoite',
+        'USER': 'geocoder',
+        'PASSWORD': 'geocoder',
         'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
         'PORT': '',                      # Set to empty string for default.
     }
@@ -157,3 +157,10 @@ LOGGING = {
         },
     }
 }
+
+# local_settings.py can be used to override environment-specific settings
+# like database and email that differ between development and production.
+try:
+    from local_settings import *
+except ImportError:
+    pass

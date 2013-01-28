@@ -4,3 +4,4 @@
 *.mo
 .Rproj.user
 .cache
+geocoder/local_settings.py
