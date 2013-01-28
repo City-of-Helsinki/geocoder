@@ -80,6 +80,7 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    'compressor.finders.CompressorFinder',
 )
 
 # Make this unique, and don't share it with anybody.
@@ -125,8 +126,11 @@ INSTALLED_APPS = (
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
+    'compressor',
+
     'tastypie',
     'geo',
+    'demo'
 )
 
 # A sample logging configuration. The only tangible logging
@@ -157,6 +161,11 @@ LOGGING = {
         },
     }
 }
+
+COMPRESS_PRECOMPILERS = (
+    ('text/coffeescript', 'coffee --compile --stdio'),
+    ('text/less', 'lessc {infile} {outfile}'),
+)
 
 # local_settings.py can be used to override environment-specific settings
 # like database and email that differ between development and production.
