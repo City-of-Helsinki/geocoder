@@ -1,4 +1,6 @@
+from django.db.models import Q
 from django.contrib.gis.geos import Point
+from django.contrib.gis.measure import D
 from tastypie.resources import ModelResource
 from tastypie.exceptions import InvalidFilterError
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
@@ -56,7 +58,8 @@ class MunicipalityBoundaryResource(GeometryModelResource):
         }
 
 class AddressResource(GeometryModelResource):
-    municipality = fields.ToOneField('geo.api.MunicipalityResource', 'municipality')
+    municipality = fields.ToOneField('geo.api.MunicipalityResource', 'municipality',
+        help_text="ID of the municipality that this address belongs to")
 
     def apply_sorting(self, objects, options=None):
         if options and 'lon' in options and 'lat' in options:
@@ -65,14 +68,31 @@ class AddressResource(GeometryModelResource):
                 lon = float(options['lon'])
             except TypeError:
                 raise InvalidFilterError("'lon' and 'lat' need to be floats")
-            objects = objects.distance(Point(lon, lat, srid=4326)).order_by('distance')
+            pnt = Point(lon, lat, srid=4326)
+            pnt.transform(PROJECTION_SRID)
+            objects = objects.distance(pnt).order_by('distance')
         return super(AddressResource, self).apply_sorting(objects, options)
     
+    def build_filters(self, filters=None):
+        orm_filters = super(AddressResource, self).build_filters(filters)
+        if filters and 'name' in filters:
+            query = filters['name']
+            orm_filters['street__istartswith'] = query
+        return orm_filters            
+
+    def dehydrate_location(self, bundle):
+        loc = bundle.data['location']
+        coords = loc['coordinates']
+        pnt = Point(coords[0], coords[1], srid=PROJECTION_SRID)
+        pnt.transform(4326)
+        loc['coordinates'] = [pnt.x, pnt.y]
+        return loc
+
     def dehydrate(self, bundle):
         distance = getattr(bundle.obj, 'distance', None)
         if distance is not None:
             bundle.data['distance'] = distance
-        print bundle
+        bundle.data['name'] = unicode(bundle.obj)
         return bundle
 
     class Meta:
@@ -81,6 +101,7 @@ class AddressResource(GeometryModelResource):
             'municipality': ALL,
             'street': ALL,
             'number': ALL,
+            'number_end': ALL,
             'letter': ALL,
             'location': ALL,
         }

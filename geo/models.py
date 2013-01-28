@@ -1,5 +1,7 @@
 from django.contrib.gis.db import models
 
+PROJECTION_SRID = 900913
+
 class Municipality(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=50)
@@ -19,14 +21,27 @@ class MunicipalityBoundary(models.Model):
 
     objects = models.GeoManager()
 
-class Address(models.Model):
-    street = models.CharField(max_length=50, db_index=True)
-    number = models.PositiveIntegerField()
-    letter = models.CharField(max_length=2, blank=True, null=True)
-    location = models.PointField()
+class Address(models.Model):    
+    street = models.CharField(max_length=50, db_index=True,
+        help_text="Name of the street")
+    number = models.PositiveIntegerField(
+        help_text="Building number")
+    number_end = models.PositiveIntegerField(blank=True, null=True,
+        help_text="Building number end (if range specified)")
+    letter = models.CharField(max_length=2, blank=True, null=True,
+        help_text="Building letter if applicable")
+    location = models.PointField(srid=PROJECTION_SRID,
+        help_text="Coordinates of the address in GeoJSON")
     municipality = models.ForeignKey(Municipality, db_index=True)
 
     objects = models.GeoManager()
 
+    def __unicode__(self):
+        s = "%s %d" % (self.street, self.number)
+        if self.letter:
+            s += "%s" % self.letter
+        s += ", %s" % self.municipality
+        return s
+
     class Meta:
-        unique_together = (('municipality', 'street', 'number', 'letter'),)
+        unique_together = (('municipality', 'street', 'number', 'number_end', 'letter'),)
