@@ -45,3 +45,4 @@ class Address(models.Model):
 
     class Meta:
         unique_together = (('municipality', 'street', 'number', 'number_end', 'letter'),)
+        ordering = ['municipality', 'street', 'number']
