@@ -1,3 +1,6 @@
+import json
+import re
+
 from django.db.models import Q
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
@@ -7,7 +10,6 @@ from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.contrib.gis.resources import ModelResource as GeometryModelResource
 from tastypie import fields
 from geo.models import *
-import json
 
 class MunicipalityResource(ModelResource):
     def _convert_to_geojson(self, bundle):
@@ -72,12 +74,24 @@ class AddressResource(GeometryModelResource):
             pnt.transform(PROJECTION_SRID)
             objects = objects.distance(pnt).order_by('distance')
         return super(AddressResource, self).apply_sorting(objects, options)
-    
+    def query_to_filters(self, query):
+        filters = {}
+        m = re.search(r'(\D+)(\d+)', query, re.U)
+        if m:
+            number = m.groups()[1]
+            street = m.groups()[0].strip()
+        else:
+            number = None
+            street = query.strip()
+        filters['street__istartswith'] = street
+        if number:
+            filters['number'] = int(number)
+        return filters
+        
     def build_filters(self, filters=None):
         orm_filters = super(AddressResource, self).build_filters(filters)
         if filters and 'name' in filters:
-            query = filters['name']
-            orm_filters['street__istartswith'] = query
+            orm_filters.update(self.query_to_filters(filters['name']))
         return orm_filters            
 
     def dehydrate_location(self, bundle):
