@@ -20,6 +20,17 @@ jQuery ->
                 process_cb(ret)
             )
     )
+    find_nearby_addresses = (coords) ->
+        url = "/api/v1/address/?format=json&lat=#{ coords[0] }&lon=#{ coords[1] }"
+        $.getJSON(url, (data) ->
+            objs = data.objects
+            el = $("#nearby-addr-list")
+            el.empty()
+            for addr in objs
+                name = addr.name
+                distance = Math.round(addr.distance)
+                el.append($("<li>#{ addr.name } #{ distance } m</li>"))
+        )
     $("#address-input").on 'change', ->
         console.log $(this).val()
         match_obj = null
@@ -32,7 +43,12 @@ jQuery ->
         console.log obj
         coords = obj.location.coordinates
         if not marker
-            marker = L.marker([coords[1], coords[0]])
+            marker = L.marker([coords[1], coords[0]],
+                draggable: true
+            )
+            marker.on 'dragend', (e) ->
+                coords = marker.getLatLng()
+                find_nearby_addresses([coords.lat, coords.lng])
             marker.addTo(map)
         else
             marker.setLatLng([coords[1], coords[0]])

@@ -68,7 +68,7 @@ class AddressResource(GeometryModelResource):
             try:
                 lat = float(options['lat'])
                 lon = float(options['lon'])
-            except TypeError:
+            except ValueError:
                 raise InvalidFilterError("'lon' and 'lat' need to be floats")
             pnt = Point(lon, lat, srid=4326)
             pnt.transform(PROJECTION_SRID)
@@ -105,7 +105,8 @@ class AddressResource(GeometryModelResource):
     def dehydrate(self, bundle):
         distance = getattr(bundle.obj, 'distance', None)
         if distance is not None:
-            bundle.data['distance'] = distance
+            distance = unicode(distance)
+            bundle.data['distance'] = float(distance.strip(' m'))
         bundle.data['name'] = unicode(bundle.obj)
         return bundle
 
