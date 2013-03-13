@@ -130,6 +130,8 @@ class POICategoryResource(ModelResource):
         }
 
 class POIResource(GeometryModelResource):
+    category = fields.ToOneField(POICategoryResource, 'category')
+
     def apply_sorting(self, objects, options=None):
         if options and 'lon' in options and 'lat' in options:
             try:
@@ -162,5 +164,5 @@ class POIResource(GeometryModelResource):
         queryset = POI.objects.all()
         filtering = {
             'municipality': ALL,
-            'category': ALL,
+            'category': ALL_WITH_RELATIONS,
         }
