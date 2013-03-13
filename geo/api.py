@@ -120,3 +120,47 @@ class AddressResource(GeometryModelResource):
             'letter': ALL,
             'location': ALL,
         }
+
+class POICategoryResource(ModelResource):
+    class Meta:
+        queryset = POICategory.objects.all()
+        filtering = {
+            'type': ALL,
+            'description': ALL,
+        }
+
+class POIResource(GeometryModelResource):
+    def apply_sorting(self, objects, options=None):
+        if options and 'lon' in options and 'lat' in options:
+            try:
+                lat = float(options['lat'])
+                lon = float(options['lon'])
+            except ValueError:
+                raise InvalidFilterError("'lon' and 'lat' need to be floats")
+            pnt = Point(lon, lat, srid=4326)
+            pnt.transform(PROJECTION_SRID)
+            objects = objects.distance(pnt).order_by('distance')
+        return super(POIResource, self).apply_sorting(objects, options)
+
+    def dehydrate_location(self, bundle):
+        loc = bundle.data['location']
+        coords = loc['coordinates']
+        pnt = Point(coords[0], coords[1], srid=PROJECTION_SRID)
+        pnt.transform(4326)
+        loc['coordinates'] = [pnt.x, pnt.y]
+        return loc
+
+    def dehydrate(self, bundle):
+        distance = getattr(bundle.obj, 'distance', None)
+        if distance is not None:
+            distance = unicode(distance)
+            bundle.data['distance'] = float(distance.strip(' m'))
+        bundle.data['category_type'] = unicode(bundle.obj.category.type)
+        return bundle
+
+    class Meta:
+        queryset = POI.objects.all()
+        filtering = {
+            'municipality': ALL,
+            'category': ALL,
+        }

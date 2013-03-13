@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import csv
+import requests
 
 from django.core.management.base import BaseCommand
 from geo.models import *
@@ -11,6 +12,16 @@ from django.contrib.gis.gdal import DataSource, SpatialReference, CoordTransform
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Point
 
 MUNI_URL = "http://tilastokeskus.fi/meta/luokitukset/kunta/001-2013/tekstitiedosto.txt"
+
+SERVICE_CATEGORY_MAP = {
+    25480: ("library", "Library"),
+    28148: ("swimming_pool", "Swimming pool"),
+}
+
+def convert_from_gk25(north, east):
+    pnt = Point(east, north, srid=3879)
+    pnt.transform(PROJECTION_SRID)
+    return pnt
 
 class Command(BaseCommand):
     help = "Manage stats app"
@@ -72,8 +83,7 @@ class Command(BaseCommand):
             if not addr:
                 addr = Address(**args)
 
-            pnt = Point(coord_e, coord_n, srid=3879)
-            pnt.transform(PROJECTION_SRID)
+            pnt = convert_from_gk25(coord_n, coord_e)
             #print "%s: %s %d%s N%d E%d (%f,%f)" % (muni_name, street, num, letter, coord_n, coord_e, pnt.y, pnt.x)
             addr.location = pnt
             if not addr.pk:
@@ -93,6 +103,33 @@ class Command(BaseCommand):
             Address.objects.bulk_create(bulk_addr_list)
             bulk_addr_list = []
 
+    def import_pois(self):
+        URL_BASE = 'http://www.hel.fi/palvelukarttaws/rest/v2/unit/?service=%d'
+        
+        muni_dict = {}
+        for muni in Municipality.objects.all():
+            muni_dict[muni.name] = muni
+        
+        for srv_id in SERVICE_CATEGORY_MAP.keys():
+            cat_type, cat_desc = SERVICE_CATEGORY_MAP[srv_id]
+            cat, c = POICategory.objects.get_or_create(type=cat_type, defaults={'description': cat_desc})
+
+            print "\tImporting %s" % cat_type
+            ret = requests.get(URL_BASE % srv_id)
+            for srv_info in ret.json():
+                srv_id = unicode(srv_info['id'])
+                try:
+                    poi = POI.objects.get(origin_id=srv_id)
+                except POI.DoesNotExist:
+                    poi = POI(origin_id=srv_id)
+                poi.name = srv_info['name_fi']
+                poi.category = cat
+                poi.municipality = muni_dict[srv_info['address_city_fi']]
+                poi.street_address = srv_info['street_address_fi']
+                poi.zip_code = srv_info.get('address_zip', None)
+                poi.location = convert_from_gk25(srv_info['northing_etrs_gk25'], srv_info['easting_etrs_gk25'])
+                poi.save()
+
     def handle(self, **options):
         http = HttpFetcher()
         http.set_cache_dir(os.path.join(settings.PROJECT_ROOT, ".cache"))
@@ -102,3 +139,5 @@ class Command(BaseCommand):
         self.import_municipalities()
         print "Importing addresses"
         self.import_addresses()
+        print "Importing POIs"
+        self.import_pois()

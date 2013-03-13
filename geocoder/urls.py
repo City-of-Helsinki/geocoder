@@ -12,6 +12,8 @@ v1_api = Api(api_name='v1')
 v1_api.register(MunicipalityResource())
 v1_api.register(MunicipalityBoundaryResource())
 v1_api.register(AddressResource())
+v1_api.register(POICategoryResource())
+v1_api.register(POIResource())
 
 urlpatterns = patterns('',
     # Examples:

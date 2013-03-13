@@ -2,3 +2,4 @@ Django
 -e git+https://github.com/toastdriven/django-tastypie.git#egg=django-tastypie
 django_compressor
 psycopg2
+requests

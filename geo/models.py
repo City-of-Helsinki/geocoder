@@ -46,3 +46,18 @@ class Address(models.Model):
     class Meta:
         unique_together = (('municipality', 'street', 'number', 'number_end', 'letter'),)
         ordering = ['municipality', 'street', 'number']
+
+class POICategory(models.Model):
+    type = models.CharField(max_length=50, db_index=True)
+    description = models.CharField(max_length=100)
+
+class POI(models.Model):
+    name = models.CharField(max_length=200)
+    category = models.ForeignKey(POICategory, db_index=True)
+    location = models.PointField(srid=PROJECTION_SRID)
+    municipality = models.ForeignKey(Municipality, db_index=True)
+    street_address = models.CharField(max_length=50)
+    zip_code = models.CharField(max_length=10, null=True, blank=True)
+    origin_id = models.CharField(max_length=20, db_index=True, unique=True)
+
+    objects = models.GeoManager()
