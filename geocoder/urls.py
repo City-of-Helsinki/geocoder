@@ -1,6 +1,7 @@
 from django.conf.urls import patterns, include, url
 from tastypie.api import Api
 from geo.api import *
+from geo.views import *
 from demo.views import DemoView
 
 # Uncomment the next two lines to enable the admin:
@@ -27,4 +28,6 @@ urlpatterns = patterns('',
     # url(r'^admin/', include(admin.site.urls)),
     url(r"^api/", include(v1_api.urls)),
     url(r"^demo/$", DemoView.as_view()),
+    url(r"^google/autocomplete/$", google_autocomplete),
+    url(r"^google/details/$", google_details),
 )
