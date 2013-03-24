@@ -3,3 +3,4 @@ Django
 django_compressor
 psycopg2
 requests
+requests-cache

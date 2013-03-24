@@ -57,7 +57,7 @@ class POI(models.Model):
     description = models.TextField(null=True, blank=True)
     location = models.PointField(srid=PROJECTION_SRID)
     municipality = models.ForeignKey(Municipality, db_index=True)
-    street_address = models.CharField(max_length=50)
+    street_address = models.CharField(max_length=100)
     zip_code = models.CharField(max_length=10, null=True, blank=True)
     origin_id = models.CharField(max_length=40, db_index=True, unique=True)
 
