@@ -16,6 +16,9 @@ MUNI_URL = "http://tilastokeskus.fi/meta/luokitukset/kunta/001-2013/tekstitiedos
 SERVICE_CATEGORY_MAP = {
     25480: ("library", "Library"),
     28148: ("swimming_pool", "Swimming pool"),
+    25402: ("toilet", "Toilet"),
+    25344: ("recycling", "Recycling point"),
+    25664: ("park", "Park"),
 }
 
 def convert_from_gk25(north, east):
@@ -124,9 +127,31 @@ class Command(BaseCommand):
                     poi = POI(origin_id=srv_id)
                 poi.name = srv_info['name_fi']
                 poi.category = cat
-                poi.municipality = muni_dict[srv_info['address_city_fi']]
-                poi.street_address = srv_info['street_address_fi']
+                if not 'address_city_fi' in srv_info:
+                    print "No city!"
+                    print srv_info
+                    continue
+                city_name = srv_info['address_city_fi']
+                if not city_name in muni_dict:
+                    city_name = city_name.encode('utf8')
+                    if srv_info.get('address_zip').startswith('00'):
+                        print "%s: %s (%s)" % (srv_info['id'], poi.name.encode('utf8'), city_name)
+                        city_name = "Helsinki"
+                    elif srv_info.get('address_zip').startswith('01'):
+                        print "%s: %s (%s)" % (srv_info['id'], poi.name.encode('utf8'), city_name)
+                        city_name = "Vantaa"
+                    elif srv_info.get('address_zip').startswith('02'):
+                        print "%s: %s (%s)" % (srv_info['id'], poi.name.encode('utf8'), city_name)
+                        city_name = "Kauniainen"
+                    else:
+                        print srv_info
+                poi.municipality = muni_dict[city_name]
+                poi.street_address = srv_info.get('street_address_fi', None)
                 poi.zip_code = srv_info.get('address_zip', None)
+                if not 'northing_etrs_gk25' in srv_info:
+                    print "No location!"
+                    print srv_info
+                    continue
                 poi.location = convert_from_gk25(srv_info['northing_etrs_gk25'], srv_info['easting_etrs_gk25'])
                 poi.save()
 
