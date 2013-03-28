@@ -134,15 +134,19 @@ class Command(BaseCommand):
                 city_name = srv_info['address_city_fi']
                 if not city_name in muni_dict:
                     city_name = city_name.encode('utf8')
-                    if srv_info.get('address_zip').startswith('00'):
+                    post_code = srv_info.get('address_zip', '')
+                    if post_code.startswith('00'):
                         print "%s: %s (%s)" % (srv_info['id'], poi.name.encode('utf8'), city_name)
                         city_name = "Helsinki"
-                    elif srv_info.get('address_zip').startswith('01'):
+                    elif post_code.startswith('01'):
                         print "%s: %s (%s)" % (srv_info['id'], poi.name.encode('utf8'), city_name)
                         city_name = "Vantaa"
-                    elif srv_info.get('address_zip').startswith('02'):
+                    elif post_code in ('02700', '02701', '02760'):
                         print "%s: %s (%s)" % (srv_info['id'], poi.name.encode('utf8'), city_name)
                         city_name = "Kauniainen"
+                    elif post_code.startswith('02'):
+                        print "%s: %s (%s)" % (srv_info['id'], poi.name.encode('utf8'), city_name)
+                        city_name = "Espoo"
                     else:
                         print srv_info
                 poi.municipality = muni_dict[city_name]
