@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
 import os
 import csv
 import requests
-
-from django.core.management.base import BaseCommand
 from geo.models import *
-from utils.http import HttpFetcher
 from django.conf import settings
 from django import db
 from django.contrib.gis.gdal import DataSource, SpatialReference, CoordTransform
@@ -26,9 +22,7 @@ def convert_from_gk25(north, east):
     pnt.transform(PROJECTION_SRID)
     return pnt
 
-class Command(BaseCommand):
-    help = "Manage stats app"
-
+class Importer(object):
     def import_municipalities(self):
         s = self.http.open_url(MUNI_URL, "muni")
         # strip first 4 lines of header and any blank/empty lines at EOF
@@ -57,8 +51,11 @@ class Command(BaseCommand):
             muni_dict[muni.name] = muni
             muni.num_addr = Address.objects.filter(municipality=muni).count()
         bulk_addr_list = []
+        count = 0
         for idx, row in enumerate(reader):
             street = row[0]
+            if not row[1]:
+                continue
             num = int(row[1])
             num2 = row[2]
             if not num2:
@@ -93,12 +90,14 @@ class Command(BaseCommand):
                 bulk_addr_list.append(addr)
             else:
                 addr.save()
+                count += 1
 
-            if idx > 0 and idx % 1000 == 0:
-                print "%d addresses processed (%d bulk entries)" % (idx, len(bulk_addr_list))
+            if len(bulk_addr_list) >= 1000 or (count > 0 and count % 1000 == 0):
                 if bulk_addr_list:
                     Address.objects.bulk_create(bulk_addr_list)
+                    count += len(bulk_addr_list)
                     bulk_addr_list = []
+                print "%d addresses processed (%d skipped)" % (count, idx + 1 - count)
                 # Reset DB query store to free up memory
                 db.reset_queries()
 
@@ -158,15 +157,3 @@ class Command(BaseCommand):
                     continue
                 poi.location = convert_from_gk25(srv_info['northing_etrs_gk25'], srv_info['easting_etrs_gk25'])
                 poi.save()
-
-    def handle(self, **options):
-        http = HttpFetcher()
-        http.set_cache_dir(os.path.join(settings.PROJECT_ROOT, ".cache"))
-        self.data_path = os.path.join(settings.PROJECT_ROOT, '..', 'data')
-        self.http = http
-        print "Importing municipalities"
-        self.import_municipalities()
-        print "Importing addresses"
-        self.import_addresses()
-        print "Importing POIs"
-        self.import_pois()
