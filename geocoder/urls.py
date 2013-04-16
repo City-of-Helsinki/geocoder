@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, include, url
 from django.conf import settings
 from tastypie.api import Api
-from geo.api import *
+from geo.api import all_resources
 from geo.views import *
 from demo.views import DemoView
 
@@ -11,11 +11,8 @@ from demo.views import DemoView
 
 v1_api = Api(api_name='v1')
 # geo
-v1_api.register(MunicipalityResource())
-v1_api.register(MunicipalityBoundaryResource())
-v1_api.register(AddressResource())
-v1_api.register(POICategoryResource())
-v1_api.register(POIResource())
+for res in all_resources:
+    v1_api.register(res())
 
 base_urlpatterns = patterns('',
     # Examples:

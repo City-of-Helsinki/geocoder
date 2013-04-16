@@ -49,21 +49,34 @@ class Importer(object):
         ds = DataSource(path, encoding='iso8859-1')
         lyr = ds[0]
         muni = Municipality.objects.get(name="Helsinki")
+        
+        obj_map = {}
+        for obj in District.objects.filter(municipality=muni):
+            obj_map[obj.origin_id] = obj
+            obj.found = False
+
         for feat in lyr:
             origin_id = feat['TUNNUS'].as_string()
             name = feat['NIMI'].as_string()
-            print name
             geom = feat.geom
             geom.srid = GK25_SRID
             geom.transform(PROJECTION_SRID)
-            try:
-                district = District.objects.get(origin_id=origin_id)
-            except District.DoesNotExist:
+            if origin_id not in obj_map:
                 district = District(origin_id=origin_id)
+                obj_map[origin_id] = district
+            else:
+                district = obj_map[origin_id]
+                if district.found:
+                    raise Exception("Duplicate origin id: %s (%s)" % (origin_id, name))
             district.municipality = muni
             district.name = name
+            print district.name
             district.borders = GEOSGeometry(geom.wkb, srid=geom.srid)
             district.save()
+            district.found = True
+        for key, obj in obj_map.iteritems():
+            if not obj.found:
+                print "District %s deleted" % obj.name
 
     def import_addresses(self):
         f = open(os.path.join(self.data_path, 'pks_osoite.csv'))

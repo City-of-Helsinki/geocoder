@@ -7,7 +7,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title></title>
+        <title>Paikkatieto-demo</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width">
 
@@ -18,11 +18,14 @@
                 padding-bottom: 40px;
             }
         </style>
-
+        <script>
+            API_PREFIX = "{{ API_PREFIX }}";
+        </script>
         <script src="{% static 'js/vendor/modernizr-2.6.2-respond-1.1.0.min.js' %}"></script>
         <!-- Leaflet map library -->
         <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.4.5/leaflet.css" />
         <script src="http://cdn.leafletjs.com/leaflet-0.4.5/leaflet.js"></script>
+        <script src="{% static 'js/tile.stamen.js' %}"></script>
         <script src="{% static 'js/moment.min.js' %}"></script>
         <script src="{% static 'js/moment-lang-fi.js' %}"></script>
     </head>
@@ -33,11 +36,12 @@
 
         <div class="container">
             <div class="span7 row" style="margin-bottom: 20px">
-                <h1>Osoitemaster-demo</h1>
+                <h1>Paikkatieto-demo</h1>
             </div>
             <div style="clear: both"></div>
-            <div class="span4 row" style="margin-bottom: 20px">
-                <input type="text" class="span4" id="address-input">
+            <div class="span8 row" style="margin-bottom: 20px">
+                <input type="text" class="span4" id="address-input" placeholder="Input an address...">
+                <input type="text" class="span4" id="district-input" placeholder="Input a district...">
             </div>
             <div style="clear: both"></div>
             <div class="well span8 row">

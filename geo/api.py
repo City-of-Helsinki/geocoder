@@ -166,3 +166,30 @@ class POIResource(GeometryModelResource):
             'municipality': ALL,
             'category': ALL_WITH_RELATIONS,
         }
+
+class DistrictResource(GeometryModelResource):
+    municipality = fields.ToOneField(MunicipalityResource, 'municipality',
+        help_text="ID of the municipality that this district belongs to")
+
+    def query_to_filters(self, query):
+        filters = {}
+        filters['name__icontains'] = query
+        return filters
+
+    def build_filters(self, filters=None):
+        orm_filters = super(DistrictResource, self).build_filters(filters)
+        if filters and 'input' in filters:
+            orm_filters.update(self.query_to_filters(filters['input']))
+        return orm_filters            
+
+    class Meta:
+        queryset = District.objects.all()
+        filtering = {
+            'municipality': ALL,
+            'name': ALL,
+        }
+
+all_resources = [
+    MunicipalityResource, MunicipalityBoundaryResource, AddressResource, POICategoryResource,
+    POIResource, DistrictResource
+]
