@@ -17,8 +17,10 @@ SERVICE_CATEGORY_MAP = {
     25664: ("park", "Park"),
 }
 
+GK25_SRID = 3879
+
 def convert_from_gk25(north, east):
-    pnt = Point(east, north, srid=3879)
+    pnt = Point(east, north, srid=GK25_SRID)
     pnt.transform(PROJECTION_SRID)
     return pnt
 
@@ -41,6 +43,27 @@ class Importer(object):
                 count += 1
         print "%d municipalities added." % count
 
+    def import_districts(self):
+        path = os.path.join(self.data_path, 'aluejaot', 'osaalue.tab')
+        ds = DataSource(path, encoding='iso8859-1')
+        lyr = ds[0]
+        muni = Municipality.objects.get(name="Helsinki")
+        for feat in lyr:
+            origin_id = feat['TUNNUS'].as_string()
+            name = feat['NIMI'].as_string()
+            print name
+            geom = feat.geom
+            geom.srid = GK25_SRID
+            geom.transform(PROJECTION_SRID)
+            try:
+                district = District.objects.get(origin_id=origin_id)
+            except District.DoesNotExist:
+                district = District(origin_id=origin_id)
+            district.municipality = muni
+            district.name = name
+            district.borders = GEOSGeometry(geom.wkb, srid=geom.srid)
+            district.save()
+
     def import_addresses(self):
         f = open(os.path.join(self.data_path, 'pks_osoite.csv'))
         reader = csv.reader(f, delimiter=',')
@@ -53,7 +76,7 @@ class Importer(object):
         bulk_addr_list = []
         count = 0
         for idx, row in enumerate(reader):
-            street = row[0]
+            street = row[0].strip()
             if not row[1]:
                 continue
             num = int(row[1])

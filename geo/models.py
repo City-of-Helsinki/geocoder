@@ -21,6 +21,14 @@ class MunicipalityBoundary(models.Model):
 
     objects = models.GeoManager()
 
+class District(models.Model):
+    municipality = models.ForeignKey(Municipality)
+    name = models.CharField(max_length=50)
+    borders = models.PolygonField()
+    origin_id = models.CharField(max_length=20)
+
+    objects = models.GeoManager()
+
 class Address(models.Model):    
     street = models.CharField(max_length=50, db_index=True,
         help_text="Name of the street")

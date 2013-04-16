@@ -10,8 +10,10 @@ class Command(BaseCommand):
     help = "Import geo data"
     option_list = BaseCommand.option_list + (
         make_option('--municipality', action='store_true', dest='municipality', help='Import municipalities'),
+        make_option('--district', action='store_true', dest='district', help='Import muni districts'),
         make_option('--address', action='store_true', dest='address', help='Import addresses'),
         make_option('--poi', action='store_true', dest='poi', help='Import POIs'),
+        make_option('--all', action='store_true', dest='all', help='Import all entities.'),
     )
 
     def handle(self, *args, **options):
@@ -23,9 +25,15 @@ class Command(BaseCommand):
         http.set_cache_dir(os.path.join(settings.PROJECT_ROOT, ".cache"))
         importer.data_path = os.path.join(settings.PROJECT_ROOT, '..', 'data')
         importer.http = http
-        print "Importing municipalities"
-        importer.import_municipalities()
-        print "Importing addresses"
-        importer.import_addresses()
-        print "Importing POIs"
-        importer.import_pois()
+        if options['all'] or options['municipality']:
+            print "Importing municipalities"
+            importer.import_municipalities()
+        if options['all'] or options['district']:
+            print "Importing districts"
+            importer.import_districts()
+        if options['all'] or options['address']:
+            print "Importing addresses"
+            importer.import_addresses()
+        if options['all'] or options['poi']:
+            print "Importing POIs"
+            importer.import_pois()
