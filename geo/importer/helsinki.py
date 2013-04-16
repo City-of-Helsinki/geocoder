@@ -26,11 +26,12 @@ def convert_from_gk25(north, east):
 
 class Importer(object):
     def import_municipalities(self):
-        s = self.http.open_url(MUNI_URL, "muni")
+        resp = requests.get(MUNI_URL)
+        s = resp.text
         # strip first 4 lines of header and any blank/empty lines at EOF
         count = 0
         for line in s.rstrip().split('\n')[4:]:
-            dec_line = line.decode('iso8859-1').rstrip().split('\t')
+            dec_line = line.rstrip().split('\t')
             (muni_id, muni_name) = dec_line
             muni_id = int(muni_id)
             muni_name = muni_name.split(' - ')[0]

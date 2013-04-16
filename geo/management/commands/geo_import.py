@@ -3,7 +3,6 @@ import os
 from optparse import make_option
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from utils.http import HttpFetcher
 
 class Command(BaseCommand):
     args = '<module>'
@@ -21,10 +20,7 @@ class Command(BaseCommand):
             raise CommandError("Enter the name of the geo importer module.")
         module = __import__('geo.importer.%s' % args[0], globals(), locals(), ['Importer'])
         importer = module.Importer()
-        http = HttpFetcher()
-        http.set_cache_dir(os.path.join(settings.PROJECT_ROOT, ".cache"))
         importer.data_path = os.path.join(settings.PROJECT_ROOT, '..', 'data')
-        importer.http = http
         if options['all'] or options['municipality']:
             print "Importing municipalities"
             importer.import_municipalities()
