@@ -1,5 +1,6 @@
 import os
 import csv
+import re
 import requests
 from geo.models import *
 from django.conf import settings
@@ -45,35 +46,41 @@ class Importer(object):
         print "%d municipalities added." % count
 
     def import_districts(self):
-        path = os.path.join(self.data_path, 'aluejaot', 'osaalue.tab')
-        ds = DataSource(path, encoding='iso8859-1')
-        lyr = ds[0]
         muni = Municipality.objects.get(name="Helsinki")
-        
         obj_map = {}
         for obj in District.objects.filter(municipality=muni):
             obj_map[obj.origin_id] = obj
             obj.found = False
 
-        for feat in lyr:
-            origin_id = feat['TUNNUS'].as_string()
-            name = feat['NIMI'].as_string()
-            geom = feat.geom
-            geom.srid = GK25_SRID
-            geom.transform(PROJECTION_SRID)
-            if origin_id not in obj_map:
-                district = District(origin_id=origin_id)
-                obj_map[origin_id] = district
-            else:
-                district = obj_map[origin_id]
-                if district.found:
-                    raise Exception("Duplicate origin id: %s (%s)" % (origin_id, name))
-            district.municipality = muni
-            district.name = name
-            print district.name
-            district.borders = GEOSGeometry(geom.wkb, srid=geom.srid)
-            district.save()
-            district.found = True
+        def import_from_file(fname):
+            path = os.path.join(self.data_path, 'aluejaot', fname)
+            ds = DataSource(path, encoding='iso8859-1')
+            lyr = ds[0]
+            for feat in lyr:
+                origin_id = feat['TUNNUS'].as_string()
+                name = feat['NIMI'].as_string()
+                # If the name is in all caps, fix capitalization.
+                if not re.search('[a-z]', name):
+                    name = name.title()
+                geom = feat.geom
+                geom.srid = GK25_SRID
+                geom.transform(PROJECTION_SRID)
+                if origin_id not in obj_map:
+                    district = District(origin_id=origin_id)
+                    obj_map[origin_id] = district
+                else:
+                    district = obj_map[origin_id]
+                    if district.found:
+                        raise Exception("Duplicate origin id: %s (%s)" % (origin_id, name))
+                district.municipality = muni
+                district.name = name
+                print district.name
+                district.borders = GEOSGeometry(geom.wkb, srid=geom.srid)
+                district.save()
+                district.found = True
+        import_from_file('osaalue.tab')
+        import_from_file('kaupunginosa.tab')
+
         for key, obj in obj_map.iteritems():
             if not obj.found:
                 print "District %s deleted" % obj.name
