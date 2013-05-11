@@ -89,23 +89,93 @@ $("#district-input").on 'change', ->
 show_plans = false
 $("#show-plans").on 'click', ->
     show_plans = true
-    refresh_plans()
-
-map.on 'moveend', (ev) ->
-    if show_plans
+    if map.getZoom() < 13
+        map.setZoom 13
+        # refresh_plans() will be called automatically through the 'moveend' event.
+    else
         refresh_plans()
 
-plans = {}
+map.on 'moveend', (ev) ->
+    if not show_plans
+        return
+    if map.getZoom() < 13
+        return
+    if plan_current_xfer
+        plan_current_xfer.abort()
+        plan_current_xfer = null
+    refresh_plans()
 
+default_style =
+    weight: 2
+    color: "blue"
+
+default_dev_style =
+    weight: 2
+    color: "red"
+
+hover_style =
+    color: "orange"
+
+plan_click = (ev) ->
+    console.log ev
+    console.log this
+
+plan_hover_start = (ev) ->
+    @.setStyle hover_style
+
+plan_hover_end = (ev) ->
+    if @.in_effect
+        @.setStyle default_style
+    else
+        @.setStyle default_dev_style
+
+plans = {}
+draw_plans = (new_plans) ->
+    for obj in new_plans
+        if obj.id of plans
+            continue
+        plans[obj.id] = obj
+        geom = L.geoJson obj.geometry
+        geom.in_effect = obj.in_effect
+        if geom.in_effect
+            geom.setStyle default_style
+        else
+            geom.setStyle default_dev_style
+        geom.bindPopup "Kaava nr. <b>#{obj.origin_id}</b>"
+        geom.on 'mouseover', plan_hover_start
+        geom.on 'mouseout', plan_hover_end
+        geom.addTo map
+
+plan_refresher = null
 refresh_plans = ->
-    bounds = map.getBounds().toBBoxString()
-    $.getJSON API_PREFIX + 'v1/plan/', {bbox: bounds, limit: 100}, (data) ->
-        for obj in data.objects
-            if obj.id of plans
-                continue
-            plans[obj.id] = obj
-            geom = L.geoJson obj.geometry,
-                style:
-                    weight: 2
-            geom.bindPopup "Kaava nr. <b>#{obj.origin_id}</b>"
-            geom.addTo map
+    if plan_refresher
+        plan_refresher.abort()
+    plan_refresher = new PlanRefresher()
+    plan_refresher.fetch()
+
+class PlanRefresher
+    constructor: ->
+        @should_abort = false
+        @current_xfer = null
+    abort: ->
+        @should_abort = true
+        if @current_xfer?
+            @current_xfer.abort()
+    fetch: ->
+        bounds = map.getBounds().toBBoxString()
+        url = API_PREFIX + 'v1/plan/'
+
+        params =
+            bbox: bounds
+            limit: 100
+
+        receive_plans = (data) =>
+            if @should_abort
+                return
+            draw_plans data.objects
+            next = data.meta.next
+            console.log data.meta
+            if next
+                @current_xfer = $.getJSON next, receive_plans
+
+        @current_xfer = $.getJSON url, params, receive_plans
