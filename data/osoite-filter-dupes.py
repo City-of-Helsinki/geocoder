@@ -9,6 +9,10 @@ def filter_dupes():
     reader.next()
     addr_hash = {}
     for idx, row in enumerate(reader):
+        if not row[-1]:
+            s = "%s %s, %s" % (row[0], row[1], row[10])
+            sys.stderr.write("No type found: %s\n" % s)
+            continue
         row_type = int(row[-1])
         if row_type != 1:
             continue
