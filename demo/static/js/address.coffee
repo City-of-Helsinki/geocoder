@@ -85,3 +85,27 @@ $("#district-input").on 'change', ->
     borders.bindPopup match_obj.name
     borders.addTo map
     map.fitBounds borders.getBounds()
+
+show_plans = false
+$("#show-plans").on 'click', ->
+    show_plans = true
+    refresh_plans()
+
+map.on 'moveend', (ev) ->
+    if show_plans
+        refresh_plans()
+
+plans = {}
+
+refresh_plans = ->
+    bounds = map.getBounds().toBBoxString()
+    $.getJSON API_PREFIX + 'v1/plan/', {bbox: bounds, limit: 100}, (data) ->
+        for obj in data.objects
+            if obj.id of plans
+                continue
+            plans[obj.id] = obj
+            geom = L.geoJson obj.geometry,
+                style:
+                    weight: 2
+            geom.bindPopup "Kaava nr. <b>#{obj.origin_id}</b>"
+            geom.addTo map

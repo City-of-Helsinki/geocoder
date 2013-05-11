@@ -10,6 +10,7 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('--municipality', action='store_true', dest='municipality', help='Import municipalities'),
         make_option('--district', action='store_true', dest='district', help='Import muni districts'),
+        make_option('--plan', action='store_true', dest='plan', help='Import muni plan'),
         make_option('--address', action='store_true', dest='address', help='Import addresses'),
         make_option('--poi', action='store_true', dest='poi', help='Import POIs'),
         make_option('--all', action='store_true', dest='all', help='Import all entities.'),
@@ -27,6 +28,9 @@ class Command(BaseCommand):
         if options['all'] or options['district']:
             print "Importing districts"
             importer.import_districts()
+        if options['all'] or options['plan']:
+            print "Importing plans"
+            importer.import_plans()
         if options['all'] or options['address']:
             print "Importing addresses"
             importer.import_addresses()

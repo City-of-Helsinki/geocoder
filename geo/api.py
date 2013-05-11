@@ -2,7 +2,7 @@ import json
 import re
 
 from django.db.models import Q
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
 from tastypie.resources import ModelResource
 from tastypie.exceptions import InvalidFilterError
@@ -189,7 +189,45 @@ class DistrictResource(GeometryModelResource):
             'name': ALL,
         }
 
+def build_bbox_filter(bbox_val, field_name):
+    points = bbox_val.split(',')
+    if len(points) != 4:
+        raise InvalidFilterError("bbox must be in format 'left,bottom,right,top'")
+    try:
+        points = [float(p) for p in points]
+    except ValueError:
+        raise InvalidFilterError("bbox values must be floating point")
+    poly = Polygon.from_bbox(points)
+    poly.srid = 4326
+    poly.transform(PROJECTION_SRID)
+    return {"%s__intersects" % field_name: poly}
+
+class PlanResource(GeometryModelResource):
+    municipality = fields.ToOneField(MunicipalityResource, 'municipality',
+        help_text="ID of the municipality that this plan belongs to")
+
+    def build_filters(self, filters=None):
+        orm_filters = super(PlanResource, self).build_filters(filters)
+        if filters and 'bbox' in filters:
+            bbox_filter = build_bbox_filter(filters['bbox'], 'geometry')
+            orm_filters.update(bbox_filter)
+        return orm_filters
+
+    def full_dehydrate(self, bundle, for_list=False):
+        # Convert to WGS-84 before outputting.
+        bundle.obj.geometry.transform(4326)
+        return super(PlanResource, self).full_dehydrate(bundle, for_list)
+
+    class Meta:
+        queryset = Plan.objects.all()
+        filtering = {
+            'municipality': ALL,
+            'origin_id': ['exact'],
+            'in_effect': ['exact'],
+            'geometry': ALL,
+        }
+
 all_resources = [
     MunicipalityResource, MunicipalityBoundaryResource, AddressResource, POICategoryResource,
-    POIResource, DistrictResource
+    POIResource, DistrictResource, PlanResource,
 ]

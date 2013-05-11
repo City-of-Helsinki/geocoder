@@ -6,7 +6,7 @@ from geo.models import *
 from django.conf import settings
 from django import db
 from django.contrib.gis.gdal import DataSource, SpatialReference, CoordTransform
-from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Point
+from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon, Point
 
 MUNI_URL = "http://tilastokeskus.fi/meta/luokitukset/kunta/001-2013/tekstitiedosto.txt"
 
@@ -52,7 +52,7 @@ class Importer(object):
             obj_map[obj.origin_id] = obj
             obj.found = False
 
-        def import_from_file(fname):
+        def import_from_file(fname, district_type):
             path = os.path.join(self.data_path, 'aluejaot', fname)
             ds = DataSource(path, encoding='iso8859-1')
             lyr = ds[0]
@@ -76,14 +76,62 @@ class Importer(object):
                 district.name = name
                 print district.name
                 district.borders = GEOSGeometry(geom.wkb, srid=geom.srid)
+                district.type = district_type
                 district.save()
                 district.found = True
-        import_from_file('osaalue.tab')
-        import_from_file('kaupunginosa.tab')
+        import_from_file('osaalue.tab', 'osa-alue')
+        import_from_file('kaupunginosa.tab', 'kaupunginosa')
 
         for key, obj in obj_map.iteritems():
             if not obj.found:
                 print "District %s deleted" % obj.name
+
+    def _import_plans(self, fname, in_effect):
+        path = os.path.join(self.data_path, 'kaavahakemisto', fname)
+        ds = DataSource(path, encoding='iso8859-1')
+        lyr = ds[0]
+
+        for idx, feat in enumerate(lyr):
+            origin_id = feat['kaavatunnus'].as_string()
+            geom = feat.geom
+            geom.srid = GK25_SRID
+            geom.transform(PROJECTION_SRID)
+            if origin_id not in self.plan_map:
+                obj = Plan(origin_id=origin_id, municipality=self.muni)
+                self.plan_map[origin_id] = obj
+            else:
+                obj = self.plan_map[origin_id]
+                if not obj.found:
+                    obj.geometry = None
+            poly = GEOSGeometry(geom.wkb, srid=geom.srid)
+            if obj.geometry:
+                obj.geometry.append(poly)
+            else:
+                obj.geometry = MultiPolygon(poly)
+            obj.in_effect = in_effect
+            obj.found = True
+            if (idx % 500) == 0:
+                print "%d imported" % idx
+        if in_effect:
+            type_str = "in effect"
+        else:
+            type_str = "development"
+        print "%d %s plans imported" % (idx, type_str)
+
+    def import_plans(self):
+        self.plan_map = {}
+        self.muni = Municipality.objects.get(name="Helsinki")
+        for obj in Plan.objects.filter(municipality=self.muni):
+            self.plan_map[obj.origin_id] = obj
+            obj.found = False
+        self._import_plans('Lv_rajaus.TAB', True)
+        self._import_plans('Kaava_vir_rajaus.TAB', False)
+        print "Saving"
+        for key, obj in self.plan_map.iteritems():
+            if obj.found:
+                obj.save()
+            else:
+                print "Plan %s deleted" % obj.name
 
     def import_addresses(self):
         f = open(os.path.join(self.data_path, 'pks_osoite.csv'))
