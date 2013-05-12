@@ -49,6 +49,8 @@ class MunicipalityResource(ModelResource):
     class Meta:
         queryset = Municipality.objects.all().order_by('name').select_related('municipalityboundary')
         resource_name = 'municipality'
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
 
 class MunicipalityBoundaryResource(GeometryModelResource):
     municipality = fields.ToOneField('geo.api.MunicipalityResource', 'municipality')
@@ -58,6 +60,8 @@ class MunicipalityBoundaryResource(GeometryModelResource):
         filtering = {
             'municipality': ALL
         }
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
 
 class AddressResource(GeometryModelResource):
     municipality = fields.ToOneField('geo.api.MunicipalityResource', 'municipality',
@@ -120,6 +124,8 @@ class AddressResource(GeometryModelResource):
             'letter': ALL,
             'location': ALL,
         }
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
 
 class POICategoryResource(ModelResource):
     class Meta:
@@ -128,6 +134,8 @@ class POICategoryResource(ModelResource):
             'type': ALL,
             'description': ALL,
         }
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
 
 class POIResource(GeometryModelResource):
     category = fields.ToOneField(POICategoryResource, 'category')
@@ -166,6 +174,8 @@ class POIResource(GeometryModelResource):
             'municipality': ALL,
             'category': ALL_WITH_RELATIONS,
         }
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
 
 class DistrictResource(GeometryModelResource):
     municipality = fields.ToOneField(MunicipalityResource, 'municipality',
@@ -188,6 +198,8 @@ class DistrictResource(GeometryModelResource):
             'municipality': ALL,
             'name': ALL,
         }
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
 
 def build_bbox_filter(bbox_val, field_name):
     points = bbox_val.split(',')
@@ -226,6 +238,8 @@ class PlanResource(GeometryModelResource):
             'in_effect': ['exact'],
             'geometry': ALL,
         }
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
 
 all_resources = [
     MunicipalityResource, MunicipalityBoundaryResource, AddressResource, POICategoryResource,
