@@ -23,7 +23,7 @@ DATABASES = {
     }
 }
 
-PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -111,10 +111,9 @@ ROOT_URLCONF = 'geocoder.urls'
 WSGI_APPLICATION = 'geocoder.wsgi.application'
 
 TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
+    os.path.join(PROJECT_ROOT, 'templates')
 )
+print TEMPLATE_DIRS
 
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -131,6 +130,7 @@ INSTALLED_APPS = (
     'compressor',
     'tastypie',
     'corsheaders',
+    'tastypie_swagger',
 
     'geo',
     'demo'
@@ -166,6 +166,8 @@ LOGGING = {
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
+
+TASTYPIE_SWAGGER_API_MODULE = 'geocoder.urls.v1_api'
 
 COMPRESS_PRECOMPILERS = (
     ('text/coffeescript', 'coffee --compile --stdio'),

@@ -5,3 +5,4 @@ psycopg2
 requests
 requests-cache
 django-cors-headers
+django-tastypie-swagger

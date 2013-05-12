@@ -25,6 +25,7 @@ base_urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     # url(r'^admin/', include(admin.site.urls)),
     url(r"^", include(v1_api.urls)),
+    url(r"^doc/", include('tastypie_swagger.urls', namespace='tastypie_swagger')),
     url(r"^demo/$", DemoView.as_view()),
     url(r"^google/autocomplete/$", google_autocomplete),
     url(r"^google/details/$", google_details),

@@ -125,7 +125,7 @@ class Command(BaseCommand):
         http = HttpFetcher()
         http.set_cache_dir(os.path.join(settings.PROJECT_ROOT, ".cache"))
         requests_cache.install_cache('geo_import_man')
-        self.data_path = os.path.join(settings.PROJECT_ROOT, '..', 'data')
+        self.data_path = os.path.join(settings.PROJECT_ROOT, 'data')
         self.http = http
         print "Importing municipalities"
         self.import_municipalities()

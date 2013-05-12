@@ -21,7 +21,7 @@ class Command(BaseCommand):
             raise CommandError("Enter the name of the geo importer module.")
         module = __import__('geo.importer.%s' % args[0], globals(), locals(), ['Importer'])
         importer = module.Importer()
-        importer.data_path = os.path.join(settings.PROJECT_ROOT, '..', 'data')
+        importer.data_path = os.path.join(settings.PROJECT_ROOT, 'data')
         if options['all'] or options['municipality']:
             print "Importing municipalities"
             importer.import_municipalities()
