@@ -46,7 +46,6 @@
         $(function () {
             window.swaggerUi = new SwaggerUi({
                 discoveryUrl:"{% url 'tastypie_swagger:resources' %}",
-                apiKey:"special-key",
                 dom_id:"swagger-ui-container",
                 supportHeaderParams: false,
                 supportedSubmitMethods: ['get', 'post', 'put'],
