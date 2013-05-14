@@ -24,16 +24,29 @@ $("#address-input").typeahead(
             process_cb(ret)
         )
 )
-find_nearby_addresses = (coords) ->
-    url = API_PREFIX + "v1/address/?format=json&lat=#{ coords[0] }&lon=#{ coords[1] }"
+        
+nearby_markers = []
+
+find_nearby_addresses = (target_coords) ->
+    url = API_PREFIX + "v1/address/?format=json&lat=#{target_coords[0]}&lon=#{target_coords[1]}"
     $.getJSON(url, (data) ->
         objs = data.objects
         el = $("#nearby-addr-list")
         el.empty()
+        for m in nearby_markers
+            map.removeLayer m
+        nearby_markers = []
+        index = 1
         for addr in objs
             name = addr.name
             distance = Math.round(addr.distance)
-            el.append($("<li>#{ addr.name } #{ distance } m</li>"))
+            coords = addr.location.coordinates
+            m = new L.Marker [coords[1], coords[0]],
+                icon: new L.NumberedDivIcon {number: index.toString()}
+            m.addTo map
+            nearby_markers.push m
+            el.append($("<li>#{addr.name} #{distance} m</li>"))
+            index++
     )
 $("#address-input").on 'change', ->
     match_obj = null
@@ -87,13 +100,6 @@ $("#district-input").on 'change', ->
     map.fitBounds borders.getBounds()
 
 show_plans = false
-$("#show-plans").on 'click', ->
-    show_plans = true
-    if map.getZoom() < 13
-        map.setZoom 13
-        # refresh_plans() will be called automatically through the 'moveend' event.
-    else
-        refresh_plans()
 
 map.on 'moveend', (ev) ->
     if not show_plans
@@ -117,8 +123,6 @@ hover_style =
     color: "orange"
 
 plan_click = (ev) ->
-    console.log ev
-    console.log this
 
 plan_hover_start = (ev) ->
     @.setStyle hover_style
@@ -145,6 +149,7 @@ draw_plans = (new_plans) ->
         geom.on 'mouseover', plan_hover_start
         geom.on 'mouseout', plan_hover_end
         geom.addTo map
+        obj.geom = geom
 
 plan_refresher = null
 refresh_plans = ->
@@ -174,8 +179,24 @@ class PlanRefresher
                 return
             draw_plans data.objects
             next = data.meta.next
-            console.log data.meta
             if next
                 @current_xfer = $.getJSON next, receive_plans
 
         @current_xfer = $.getJSON url, params, receive_plans
+
+$("#show-plans").on 'click', ->
+    if show_plans
+        for plan_id of plans
+            plan = plans[plan_id]
+            map.removeLayer plan.geom
+        plans = {}
+        show_plans = false
+        $("#show-plans").html 'Show plans'
+        return
+    show_plans = true
+    if map.getZoom() < 13
+        map.setZoom 13
+        # refresh_plans() will be called automatically through the 'moveend' event.
+    else
+        refresh_plans()
+    $("#show-plans").html 'Hide plans'
