@@ -4,8 +4,9 @@ import re
 from django.db.models import Q
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
+from tastypie.http import HttpBadRequest
 from tastypie.resources import ModelResource
-from tastypie.exceptions import InvalidFilterError
+from tastypie.exceptions import InvalidFilterError, ImmediateHttpResponse
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.contrib.gis.resources import ModelResource as GeometryModelResource
 from tastypie import fields
@@ -78,6 +79,34 @@ class AddressResource(GeometryModelResource):
             pnt.transform(PROJECTION_SRID)
             objects = objects.distance(pnt).order_by('distance')
         return super(AddressResource, self).apply_sorting(objects, options)
+
+    def apply_filters(self, request, applicable_filters):
+        if 'distinct_streets' in applicable_filters:
+            ds = applicable_filters.pop('distinct_streets')
+        else:
+            ds = None
+        queryset = (super(AddressResource, self)
+                    .apply_filters(request, applicable_filters))
+        if ds:
+            queryset = (queryset.order_by(*ds['order_by'])
+                                .distinct(*ds['distinct']))
+        return queryset
+
+    def distinct_streets(self, ds):
+        filters = {}
+        if ds == 'true':
+            filters['distinct_streets'] = {
+                'order_by': ['municipality', 'street'],
+                'distinct': ['municipality', 'street']}
+        elif ds != 'false':
+            raise ImmediateHttpResponse(
+                response=HttpBadRequest(
+                    content="{\"error\": \"If given, the option "
+                            "distinct_streets must be either 'true' or "
+                            "'false'.\"}",
+                    content_type='application/json'))
+        return filters
+
     def query_to_filters(self, query):
         filters = {}
         m = re.search(r'(\D+)(\d+)', query, re.U)
@@ -94,8 +123,12 @@ class AddressResource(GeometryModelResource):
         
     def build_filters(self, filters=None):
         orm_filters = super(AddressResource, self).build_filters(filters)
-        if filters and 'name' in filters:
-            orm_filters.update(self.query_to_filters(filters['name']))
+        if filters:
+            if 'name' in filters:
+                orm_filters.update(self.query_to_filters(filters['name']))
+            if 'distinct_streets' in filters:
+                orm_filters.update(self.distinct_streets(
+                    filters['distinct_streets']))
         return orm_filters            
 
     def dehydrate_location(self, bundle):
