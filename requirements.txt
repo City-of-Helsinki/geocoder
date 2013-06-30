@@ -6,3 +6,6 @@ requests
 requests-cache
 django-cors-headers
 django-tastypie-swagger
+lxml
+BeautifulSoup
+defusedxml
