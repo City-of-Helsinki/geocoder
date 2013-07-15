@@ -129,7 +129,7 @@ INSTALLED_APPS = (
     'corsheaders',
     'tastypie_swagger',
 
-    'geo',
+    'munigeo',
     'demo'
 )
 

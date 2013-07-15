@@ -1,8 +1,8 @@
 from django.conf.urls import patterns, include, url
 from django.conf import settings
 from tastypie.api import Api
-from geo.api import all_resources
-from geo.views import *
+from munigeo.api import all_resources
+from munigeo.views import *
 from demo.views import DemoView
 
 # Uncomment the next two lines to enable the admin:

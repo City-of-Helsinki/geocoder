@@ -10,7 +10,7 @@ from tastypie.exceptions import InvalidFilterError, ImmediateHttpResponse
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.contrib.gis.resources import ModelResource as GeometryModelResource
 from tastypie import fields
-from geo.models import *
+from munigeo.models import *
 
 class MunicipalityResource(ModelResource):
     def _convert_to_geojson(self, bundle):
@@ -54,7 +54,7 @@ class MunicipalityResource(ModelResource):
         detail_allowed_methods = ['get']
 
 class MunicipalityBoundaryResource(GeometryModelResource):
-    municipality = fields.ToOneField('geo.api.MunicipalityResource', 'municipality')
+    municipality = fields.ToOneField('munigeo.api.MunicipalityResource', 'municipality')
     class Meta:
         queryset = MunicipalityBoundary.objects.all()
         resource_name = 'municipality_boundary'
@@ -65,7 +65,7 @@ class MunicipalityBoundaryResource(GeometryModelResource):
         detail_allowed_methods = ['get']
 
 class AddressResource(GeometryModelResource):
-    municipality = fields.ToOneField('geo.api.MunicipalityResource', 'municipality',
+    municipality = fields.ToOneField('munigeo.api.MunicipalityResource', 'municipality',
         help_text="ID of the municipality that this address belongs to")
 
     def apply_sorting(self, objects, options=None):

@@ -8,7 +8,7 @@ import urllib
 import json
 
 from django.core.management.base import BaseCommand
-from geo.models import *
+from munigeo.models import *
 from utils.http import HttpFetcher
 from django.conf import settings
 from django import db

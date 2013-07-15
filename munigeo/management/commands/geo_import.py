@@ -19,7 +19,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if len(args) != 1:
             raise CommandError("Enter the name of the geo importer module.")
-        module = __import__('geo.importer.%s' % args[0], globals(), locals(), ['Importer'])
+        module = __import__('munigeo.importer.%s' % args[0], globals(), locals(), ['Importer'])
         importer = module.Importer()
         importer.data_path = os.path.join(settings.PROJECT_ROOT, 'data')
         if options['all'] or options['municipality']:

@@ -2,7 +2,7 @@ import os
 import csv
 import re
 import requests
-from geo.models import *
+from munigeo.models import *
 from django.conf import settings
 from django import db
 from django.contrib.gis.gdal import DataSource, SpatialReference, CoordTransform
