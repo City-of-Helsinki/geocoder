@@ -171,6 +171,8 @@ COMPRESS_PRECOMPILERS = (
     ('text/less', 'lessc {infile} {outfile}'),
 )
 
+TASTYPIE_DEFAULT_FORMATS = ['json']
+
 # local_settings.py can be used to override environment-specific settings
 # like database and email that differ between development and production.
 try:
