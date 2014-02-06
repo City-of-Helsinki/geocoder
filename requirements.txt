@@ -9,3 +9,4 @@ django-tastypie-swagger
 lxml
 BeautifulSoup
 defusedxml
+-e git+https://github.com/juyrjola/munigeo#egg=django-munigeo
