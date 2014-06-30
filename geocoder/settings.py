@@ -34,6 +34,10 @@ TIME_ZONE = 'Europe/Helsinki'
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'fi'
+LANGUAGES = (
+    ('fi', 'Finnish'),
+    ('sv', 'Swedish'),
+)
 
 SITE_ID = 1
 
@@ -125,6 +129,7 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     'corsheaders',
+    'modeltranslation',
 
     'munigeo',
 )

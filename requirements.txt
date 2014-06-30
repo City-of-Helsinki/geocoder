@@ -6,3 +6,4 @@ django-cors-headers
 lxml
 defusedxml
 -e git+https://github.com/juyrjola/munigeo#egg=django-munigeo
+django-modeltranslation
