@@ -124,13 +124,9 @@ INSTALLED_APPS = (
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    'compressor',
-    'tastypie',
     'corsheaders',
-    'tastypie_swagger',
 
     'munigeo',
-    'demo'
 )
 
 # A sample logging configuration. The only tangible logging
@@ -164,18 +160,9 @@ LOGGING = {
 
 CORS_ORIGIN_ALLOW_ALL = True
 
-TASTYPIE_SWAGGER_API_MODULE = 'geocoder.urls.v1_api'
-
-COMPRESS_PRECOMPILERS = (
-    ('text/coffeescript', 'coffee --compile --stdio'),
-    ('text/less', 'lessc {infile} {outfile}'),
-)
-
-TASTYPIE_DEFAULT_FORMATS = ['json']
-
 # local_settings.py can be used to override environment-specific settings
 # like database and email that differ between development and production.
 try:
-    from local_settings import *
+    from .local_settings import *
 except ImportError:
     pass

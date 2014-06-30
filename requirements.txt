@@ -1,12 +1,8 @@
 Django
-django-tastypie
-django_compressor
 psycopg2
 requests
 requests-cache
 django-cors-headers
-django-tastypie-swagger
 lxml
-BeautifulSoup
 defusedxml
 -e git+https://github.com/juyrjola/munigeo#egg=django-munigeo
