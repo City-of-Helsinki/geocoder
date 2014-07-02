@@ -20,6 +20,7 @@ DATABASES = {
         'PASSWORD': 'geocoder',
         'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
         'PORT': '',                      # Set to empty string for default.
+        'CONN_MAX_AGE': 3600
     }
 }
 
@@ -128,8 +129,10 @@ INSTALLED_APPS = (
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
+    'django_extensions',
     'corsheaders',
     'modeltranslation',
+    'rest_framework',
 
     'munigeo',
 )
@@ -163,9 +166,20 @@ LOGGING = {
     }
 }
 
+REST_FRAMEWORK = {
+    'PAGINATE_BY': 20,
+    'PAGINATE_BY_PARAM': 'page_size',
+    'MAX_PAGINATE_BY': 1000,
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.UnicodeJSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework.renderers.JSONPRenderer',
+    ),
+}
+
 CORS_ORIGIN_ALLOW_ALL = True
 
-PROJECTION_SRID=3067 # ETRS-TM35FIN
+PROJECTION_SRID = 3067 # ETRS-TM35FIN
 
 # local_settings.py can be used to override environment-specific settings
 # like database and email that differ between development and production.
